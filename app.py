@@ -12,7 +12,7 @@ if "history" not in st.session_state:
     st.session_state.history = []
 
 if "GEMINI_API_KEY" not in os.environ:
-    st.error("yo we need the api key to work")
+    st.error("Please input your API Key ")
     st.stop()
 
 
@@ -23,7 +23,7 @@ picture = st.camera_input("Take a photo of an animal for me to analyse")
 if picture:
     img = Image.open(picture)
 
-    with st.spinner("yo boy i am processing the photo"):
+    with st.spinner("We are currently processing the image "):
         try:
             response = client.models.generate_content(
                 model= 'gemini-3.5-flash-lite' , 
@@ -35,15 +35,15 @@ if picture:
             st.success(f"{ai_description} ")
 
             st.session_state.history.insert(0, ai_description)
-            st.toast("yo boy the analysis done")
+            st.toast("Image Analysis Done")
         except Exception as e:
-            st.error(f"error communicating with the ai bro: {e}")
+            st.error(f"There has been an error when communicating with the AI : {e}")
 
 st.subheader("session history (resets on refresh)")
 if st.session_state.history:
     for item in st.session_state.history:
         st.write(f"•{item}")
 else:
-    st.info("you havent analysed anything")
+    st.info("Nothing has been sent to analyse")
 
 
