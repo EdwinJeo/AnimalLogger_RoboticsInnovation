@@ -27,12 +27,12 @@ if picture:
         try:
             response = client.models.generate_content(
                 model= 'gemini-3.5-flash-lite' , 
-                contents=[img,"Describe what animal you see in this image in one word"]
+                contents=[img,"Describe what animal you see in this image in one word, as well as this on a new line please add the population of the species, then on another line add the species endangerment do this in a simple readable format that is readable and coherent"]
             )
             print("Google got it")
 
             ai_description = response.text
-            st.success(f" **Result** {ai_description} ")
+            st.success(f"{ai_description} ")
 
             st.session_state.history.insert(0, ai_description)
             st.toast("yo boy the analysis done")
