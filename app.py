@@ -70,8 +70,12 @@ if picture:
             st.success(f"{formatted_description} \n\n +{earned_xp} XP added to your score!") #displays the response in a green text box
             st.balloons()
 
+            analysed_items = {
+                "image" : img,
+                "description" : f"{formatted_description}  \n\n  {earned_xp} XP"
+            }
 
-            st.session_state.history.insert(0, ai_description) #puts into the list at the bottom
+            st.session_state.history.insert(0, analysed_items) #puts into the list at the bottom
             st.toast("Image Analysis Done") #just to say it worked
             
         except Exception as e: #when error logic
@@ -81,7 +85,17 @@ if picture:
 st.subheader("session history (resets on refresh)")
 if st.session_state.history:
     for item in st.session_state.history:
-        st.write(f"•{item}") #appending to the history list
+        #setting up column
+        col1, col2 = st.columns([1,2])
+        
+        #to display image in first column
+        with col1:
+            st.image(item["image"],width="content")
+
+        #to display info in second column
+        with col2:
+            st.success(item["description"])
+
         st.divider()
 else:
     st.info("Nothing has been sent to analyse") # what to show when nothing is there
