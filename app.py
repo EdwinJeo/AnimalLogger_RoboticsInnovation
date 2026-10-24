@@ -36,7 +36,7 @@ if picture:
         try:
             response = client.models.generate_content(
                 model= 'gemini-3.5-flash-lite' , 
-                contents=[img,"Describe what animal you see in this image in one word, as well as this on a new line please add the population of the species, then on another line add the species endangerment do this in a simple readable format that is readable and coherent"]
+                contents=[img,"Describe what animal you see in this image in one word, as well as this on a new line please add the population of the species, then on another line add the species endangerment do this in a simple readable format that is readable and coherent. But if it is not an animal just reply with this is not an animal "]
             )
 
             ai_description = response.text #uses the variable to make it easier
