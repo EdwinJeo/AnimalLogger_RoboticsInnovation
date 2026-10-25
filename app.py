@@ -18,9 +18,15 @@ if "history" not in st.session_state:
     st.session_state.history = []
 if "score" not in st.session_state:
     st.session_state.score = 0
+if "last_processed" not in st.session_state:
+    st.session_state.last_processed = None
+
+currentLevel = (st.session_state.score // 300) + 1 # setting level
+xpProgress = st.session_state.score % 300 #setting xp
 
 #to add the xp at the top
 st.metric(label="Total XP",value=f"{st.session_state.score} XP")
+st.progress(min(xpProgress / 300.0, 1.0), text=f"Progress to Level {currentLevel + 1} ({xpProgress}/300 XP)") #uses progress bar to add level system 
 st.divider()
 
 #ensuring I set up the key 
@@ -34,9 +40,10 @@ client = genai.Client()
 #the actual picture thign
 picture = st.camera_input("Take a photo of an animal for me to analyse")
 
-#to give the picture to ai I need to initialise it 
-if picture:
-    img = Image.open(picture)
+#to give the picture to ai i need to check i havent already done it
+if picture and picture != st.session_state.last_processed:
+    #locks it up if i have
+    st.session_state.last_processed = picture
 
     #cool spinning animation to show smth happening
     with st.spinner("We are currently processing the image "):
@@ -54,7 +61,7 @@ if picture:
         try:
             response = client.models.generate_content(
                 model= 'gemini-3.5-flash-lite' , 
-                contents=[img,prompt]
+                contents=[Image.open(picture),prompt]
             )
 
             ai_description = response.text #uses the variable to make it easier
@@ -91,14 +98,18 @@ if picture:
                     pass
 
                 #fallback if this doesn't work 
-                display_image = image_url if image_url else img
+                display_image = image_url if image_url else Image.open(picture)
 
 
                 st.session_state.score += earned_xp
 
+                
+                
+
                 formatted_description = ai_description.replace('\n', '  \n')
                 st.success(f"{formatted_description} \n\n +{earned_xp} XP added to your score!") #displays the response in a green text box
                 st.balloons()
+                
 
                 analysed_items = {
                     "image" : display_image,
@@ -107,6 +118,8 @@ if picture:
 
                 st.session_state.history.insert(0, analysed_items) #puts into the list at the bottom
                 st.toast("Image Analysis Done") #just to say it worked
+
+                st.rerun() #to update thing
             
         except Exception as e: #when error logic
             st.error(f"There has been an error when communicating with the AI : {e}") #displays the error and error code in a red box
