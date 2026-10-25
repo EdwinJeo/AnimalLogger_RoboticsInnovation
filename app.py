@@ -6,6 +6,7 @@ from datetime import datetime
 from google import genai 
 from PIL import Image 
 import urllib.parse
+import requests
 
 
 #Getting the page set up so that the tab thingy shows stuff 
