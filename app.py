@@ -59,51 +59,54 @@ if picture:
 
             ai_description = response.text #uses the variable to make it easier
 
-            earned_xp = 0 #default fallback for the thing as the other stuff wont always work 
-            for line in ai_description.split('\n'): #sorts through the response line by line
-                if "XP:" in line: #find the word xp within line so that it knows where to search 
-                    import re 
-                    nums = re.findall(r'\d+',line ) #setting a variable to the xp value - but it is string 
-                    if nums: #to get the xp into the xp score thing
-                        earned_xp = int(nums[0]) #adds the parsed xp score to the earned xp thingy
+            if "No Animal Identified" in ai_description: #this way if it detects nothing it wont store or give xp 
+                st.warning("No animal was detected in this photo, please take another photo") #to give user warning 
+            else: #any other time just respond with this
+                earned_xp = 100 #default fallback for the thing as the other stuff wont always work 
+                for line in ai_description.split('\n'): #sorts through the response line by line
+                    if "XP:" in line: #find the word xp within line so that it knows where to search 
+                        import re 
+                        nums = re.findall(r'\d+',line ) #setting a variable to the xp value - but it is string 
+                        if nums: #to get the xp into the xp score thing
+                            earned_xp = int(nums[0]) #adds the parsed xp score to the earned xp thingy
 
 
-            animal_name = "Wildlife" #making a default fallback in case of fail
-            for line in ai_description.split('\n'):#sorts through ai response line by line 
-                if "Name:" in line: #identifies part with the name of animal in it 
-                    animal_name = line.replace("Name:" , "").strip() # replaces variable with the name 
+                animal_name = "Wildlife" #making a default fallback in case of fail
+                for line in ai_description.split('\n'):#sorts through ai response line by line 
+                    if "Name:" in line: #identifies part with the name of animal in it 
+                        animal_name = line.replace("Name:" , "").strip() # replaces variable with the name 
 
-            image_url = None
-            try:
-                formatted_query = urllib.parse.quote(animal_name) #sets a variable to give to the url as the animal name 
-                wiki_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{formatted_query}" #gets the image using the animal name that we just got 
-                headers = {'User-Agent': 'TalosAnimalRecogniser/1.0 (Educational Project)'} #to follow the strict wikimedia guidelines
+                image_url = None
+                try:
+                    formatted_query = urllib.parse.quote(animal_name) #sets a variable to give to the url as the animal name 
+                    wiki_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{formatted_query}" #gets the image using the animal name that we just got 
+                    headers = {'User-Agent': 'TalosAnimalRecogniser/1.0 (Educational Project)'} #to follow the strict wikimedia guidelines
 
-                wiki_response = requests.get(wiki_url, headers = headers) #askign wikimedia for the picture 
-                if wiki_response.status_code == 200: #if it says yes then set the data into a file 
-                    wiki_data = wiki_response.json() #settign data into a file
-                    if "thumbnail" in wiki_data: #checking to see if there is a pic 
-                        image_url = wiki_data["thumbnail"]["source"] #setting the image url for the pic 
-            except Exception: #if not work then dont do 
-                pass
+                    wiki_response = requests.get(wiki_url, headers = headers) #askign wikimedia for the picture 
+                    if wiki_response.status_code == 200: #if it says yes then set the data into a file 
+                        wiki_data = wiki_response.json() #settign data into a file
+                        if "thumbnail" in wiki_data: #checking to see if there is a pic 
+                            image_url = wiki_data["thumbnail"]["source"] #setting the image url for the pic 
+                except Exception: #if not work then dont do 
+                    pass
 
-            #fallback if this doesn't work 
-            display_image = image_url if image_url else img
+                #fallback if this doesn't work 
+                display_image = image_url if image_url else img
 
 
-            st.session_state.score += earned_xp
+                st.session_state.score += earned_xp
 
-            formatted_description = ai_description.replace('\n', '  \n')
-            st.success(f"{formatted_description} \n\n +{earned_xp} XP added to your score!") #displays the response in a green text box
-            st.balloons()
+                formatted_description = ai_description.replace('\n', '  \n')
+                st.success(f"{formatted_description} \n\n +{earned_xp} XP added to your score!") #displays the response in a green text box
+                st.balloons()
 
-            analysed_items = {
-                "image" : display_image,
-                "description" : f"{formatted_description}  \n\n  {earned_xp} XP"
-            }
+                analysed_items = {
+                    "image" : display_image,
+                    "description" : f"{formatted_description}  \n\n  {earned_xp} XP"
+                }
 
-            st.session_state.history.insert(0, analysed_items) #puts into the list at the bottom
-            st.toast("Image Analysis Done") #just to say it worked
+                st.session_state.history.insert(0, analysed_items) #puts into the list at the bottom
+                st.toast("Image Analysis Done") #just to say it worked
             
         except Exception as e: #when error logic
             st.error(f"There has been an error when communicating with the AI : {e}") #displays the error and error code in a red box
