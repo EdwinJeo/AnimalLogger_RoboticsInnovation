@@ -62,7 +62,7 @@ if picture and picture != st.session_state.last_processed:
         #give the image to the ai 
         try:
             response = client.models.generate_content(
-                model= 'gemini-3.5-flash-lite' , 
+                model= 'gemma-4-31b-it' , 
                 contents=[Image.open(picture),prompt]
             )
 
