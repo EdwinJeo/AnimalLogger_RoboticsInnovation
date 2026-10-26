@@ -21,6 +21,8 @@ if "score" not in st.session_state:
 if "last_processed" not in st.session_state:
     st.session_state.last_processed = None
 
+
+#Setting up level and progress for XP
 currentLevel = (st.session_state.score // 300) + 1 # setting level
 xpProgress = st.session_state.score % 300 #setting xp
 
@@ -34,15 +36,15 @@ if "GEMINI_API_KEY" not in os.environ:
     st.error("Please input your API Key ")
     st.stop()
 
-#just to say use Gemini 
+#just to say use Gemini to set it up as a variable
 client = genai.Client()
 
-#the actual picture thign
+#the actual picture thing
 picture = st.camera_input("Take a photo of an animal for me to analyse")
 
 #to give the picture to ai i need to check i havent already done it
 if picture and picture != st.session_state.last_processed:
-    #locks it up if i have
+    #sets the picture taken to a variable to ensure it doesn't get processed again 
     st.session_state.last_processed = picture
 
     #cool spinning animation to show smth happening
@@ -83,13 +85,13 @@ if picture and picture != st.session_state.last_processed:
                     if "Name:" in line: #identifies part with the name of animal in it 
                         animal_name = line.replace("Name:" , "").strip() # replaces variable with the name 
 
-                image_url = None
+                image_url = None# image url is set to none to act as a fallback 
                 try:
                     formatted_query = urllib.parse.quote(animal_name) #sets a variable to give to the url as the animal name 
                     wiki_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{formatted_query}" #gets the image using the animal name that we just got 
                     headers = {'User-Agent': 'TalosAnimalRecogniser/1.0 (Educational Project)'} #to follow the strict wikimedia guidelines
 
-                    wiki_response = requests.get(wiki_url, headers = headers) #askign wikimedia for the picture 
+                    wiki_response = requests.get(wiki_url, headers = headers) #asking wikimedia for the picture 
                     if wiki_response.status_code == 200: #if it says yes then set the data into a file 
                         wiki_data = wiki_response.json() #settign data into a file
                         if "thumbnail" in wiki_data: #checking to see if there is a pic 
@@ -119,13 +121,13 @@ if picture and picture != st.session_state.last_processed:
                 st.session_state.history.insert(0, analysed_items) #puts into the list at the bottom
                 st.toast("Image Analysis Done") #just to say it worked
 
-                st.rerun() #to update thing
+                st.rerun() #to update thing so that it shows xp 
             
         except Exception as e: #when error logic
             st.error(f"There has been an error when communicating with the AI : {e}") #displays the error and error code in a red box
 
 #displaying the list 
-st.subheader("session history (resets on refresh)")
+st.subheader("Session History (Resets on Refresh)")
 if st.session_state.history:
     for item in st.session_state.history:
         #setting up column
