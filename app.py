@@ -58,7 +58,7 @@ if picture and picture != st.session_state.last_processed:
         Population: [Brief detail about its global or local population trend]
         Eco-Fact: [One short, kid-friendly fact on how it helps the ecosystem]
         XP: [Give it an XP score between 50 and 200 based on how rare or interesting it is, just write the number]
-        GlobalPoints: [Provide 6 to 10 pairs of latitude and longitude coordinates representing its worldwide habitat regions. CRITICAL: If the animal is domesticated or global like a cat or dog, distribute points across North America, South America, Europe, Asia, Africa, and Australia so it covers the whole world! It is also VITAL you follow this exact format with a 'GlobalPoint:' prefix]
+        GlobalPoints: [Provide 6 to 10 pairs of latitude and longitude coordinates representing its worldwide habitat regions. CRITICAL: If the animal is domesticated or global like a cat or dog, distribute points across North America, South America, Europe, Asia, Africa, and Australia so it covers the whole world! It is also VITAL you follow this exact format with a 'GlobalPoint:' prefix before the first one and only that]
         If there are multiple animals, separate each animal block with '---' on its own line.
 
         Please note that if the image does not show an animal then respond with 'No Animal Identified'
