@@ -8,6 +8,7 @@ from PIL import Image
 import urllib.parse
 import requests
 import pydeck as pdk
+import re
 
 
 #Getting the page set up so that the tab thingy shows stuff 
@@ -58,6 +59,8 @@ if picture and picture != st.session_state.last_processed:
         Eco-Fact: [One short, kid-friendly fact on how it helps the ecosystem]
         XP: [Give it an XP score between 50 and 200 based on how rare or interesting it is, just write the number]
         GlobalPoints: [Provide 5 to 8 pairs of latitude and longitude coordinates representing its worldwide habitat regions, formatted strictly as: lat,lon; lat,lon; lat,lon]
+        If there are multiple animals, separate each animal block with '---' on its own line.
+
         Please note that if the image does not show an animal then respond with 'No Animal Identified'
         """
 
@@ -70,84 +73,82 @@ if picture and picture != st.session_state.last_processed:
 
             ai_description = response.text #uses the variable to make it easier
 
-            if "No Animal Identified" in ai_description: #this way if it detects nothing it wont store or give xp 
-                st.warning("No animal was detected in this photo, please take another photo") #to give user warning 
-            else: #any other time just respond with this
-                earned_xp = 100 #default fallback for the thing as the other stuff wont always work 
-                for line in ai_description.split('\n'): #sorts through the response line by line
-                    if "XP:" in line: #find the word xp within line so that it knows where to search 
-                        import re 
-                        nums = re.findall(r'\d+',line ) #setting a variable to the xp value - but it is string 
-                        if nums: #to get the xp into the xp score thing
-                            earned_xp = int(nums[0]) #adds the parsed xp score to the earned xp thingy
-
-
-                animal_name = "Wildlife" #making a default fallback in case of fail
-                for line in ai_description.split('\n'):#sorts through ai response line by line 
-                    if "Name:" in line: #identifies part with the name of animal in it 
-                        animal_name = line.replace("Name:" , "").strip() # replaces variable with the name 
-
-
-                #getting the data for heatmap to work
-                heatmap_data = [] #getting the heatmap data into index / list
-                clean_description_lines = [] #so that this way the user doesn't see anything
-                for line in ai_description.split('\n'): #parsing through all of the lines
-                    if "GlobalPoints:" in line: #searching for the lat and long
-                        points_str = line.replace("GlobalPoints:", "").strip() #setting into variable
-                        pairs = points_str.split(';') #splitting into pairs by splitting after the semi colon
-                        for pair in pairs: #for every pair in the pairs thing then do smth else
-                            if ',' in pair: #if there is a comma in the pair then
-                                try:  # do this 
-                                    lat_str, lon_str = pair.split(',') #split into two variables which are lat and long 
-                                    heatmap_data.append({"lat": float(lat_str.strip()), "lon": float(lon_str.strip())}) #set it to the index or list and do it by setting this through use of loat and strip to cut it 
-                                except ValueError: #if there is something wrong then pass code
-                                    pass
-                    else:
-                        clean_description_lines.append(line) #if doesnt work then just delete that line from the thing
-
-                clean_description = "\n".join(clean_description_lines) #removing that line to make it nice and clean for end user
-                formatted_description = clean_description.replace('\n',  '  \n') #replacing it with better new line as that new line is not accpeted in md 
-                df_heatmap = pd.DataFrame(heatmap_data) #variable called data for heatmap is set up
-
-                image_url = None# image url is set to none to act as a fallback 
-                try:
-                    formatted_query = urllib.parse.quote(animal_name) #sets a variable to give to the url as the animal name 
-                    wiki_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{formatted_query}" #gets the image using the animal name that we just got 
-                    headers = {'User-Agent': 'TalosAnimalRecogniser/1.0 (Educational Project)'} #to follow the strict wikimedia guidelines
-
-                    wiki_response = requests.get(wiki_url, headers = headers) #asking wikimedia for the picture 
-                    if wiki_response.status_code == 200: #if it says yes then set the data into a file 
-                        wiki_data = wiki_response.json() #settign data into a file
-                        if "thumbnail" in wiki_data: #checking to see if there is a pic 
-                            image_url = wiki_data["thumbnail"]["source"] #setting the image url for the pic 
-                except Exception: #if not work then dont do 
-                    pass
-
-                #fallback if this doesn't work 
-                display_image = image_url if image_url else Image.open(picture)
-
-
-                st.session_state.score += earned_xp
-
-                # Using clean_description here so GlobalPoints text never displays
-                st.success(f"{formatted_description} \n\n +{earned_xp} XP added to your score!") #displays the response in a green text box
-                st.balloons()
+            if "No Animal Identified" in ai_description: 
+                st.warning("No animal was detected in this photo, please take another photo") 
+            else: 
+                animal_blocks = ai_description.split("---") 
+                total_earned_xp = 0  
                 
+                for block in animal_blocks:
+                    if not block.strip():
+                        continue
 
-                analysed_items = {
-                    "image" : display_image,
-                    "description" : f"{formatted_description}  \n\n  {earned_xp} XP",
-                    "heatmap" : df_heatmap #because history log shows all of them we need to make sure they each save theirs
+                    earned_xp = 100 
+                    for line in block.split('\n'): # <-- FIXED: parses individual block lines
+                        if "XP:" in line: 
+                            nums = re.findall(r'\d+', line) 
+                            if nums:
+                                earned_xp = int(nums[0])
 
-                }
+                    animal_name = "Wildlife" 
+                    for line in block.split('\n'): # <-- FIXED: parses individual block lines
+                        if "Name:" in line: 
+                            animal_name = line.replace("Name:" , "").strip() 
 
-                st.session_state.history.insert(0, analysed_items) #puts into the list at the bottom
-                st.toast("Image Analysis Done") #just to say it worked
+                    #getting the data for heatmap to work
+                    heatmap_data = [] 
+                    clean_description_lines = [] 
+                    for line in block.split('\n'): # <-- FIXED: parses individual block lines
+                        if "GlobalPoints:" in line: 
+                            points_str = line.replace("GlobalPoints:", "").strip() 
+                            pairs = points_str.split(';') 
+                            for pair in pairs: 
+                                if ',' in pair: 
+                                    try:  
+                                        lat_str, lon_str = pair.split(',') 
+                                        heatmap_data.append({"lat": float(lat_str.strip()), "lon": float(lon_str.strip())}) 
+                                    except ValueError: 
+                                        pass
+                        else:
+                            clean_description_lines.append(line)
 
-                st.rerun() #to update thing so that it shows xp 
+                    clean_description = "\n".join(clean_description_lines).strip() 
+                    formatted_description = clean_description.replace('\n',  '  \n') 
+                    df_heatmap = pd.DataFrame(heatmap_data) 
+
+                    image_url = None
+                    try:
+                        formatted_query = urllib.parse.quote(animal_name) 
+                        wiki_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{formatted_query}" 
+                        headers = {'User-Agent': 'TalosAnimalRecogniser/1.0 (Educational Project)'} 
+
+                        wiki_response = requests.get(wiki_url, headers = headers) 
+                        if wiki_response.status_code == 200: 
+                            wiki_data = wiki_response.json() 
+                            if "thumbnail" in wiki_data: 
+                                image_url = wiki_data["thumbnail"]["source"] 
+                    except Exception: 
+                        pass
+
+                    display_image = image_url if image_url else Image.open(picture)
+                    total_earned_xp += earned_xp
+
+                    analysed_items = {
+                        "image" : display_image,
+                        "description" : f"{formatted_description}  \n\n  {earned_xp} XP",
+                        "heatmap" : df_heatmap 
+                    }
+
+                    st.session_state.history.insert(0, analysed_items) 
+
+                st.session_state.score += total_earned_xp
+                st.success(f"Successfully processed animals! Total +{total_earned_xp} XP added.") 
+                st.balloons()
+                st.toast("Image Analysis Done") 
+                st.rerun() 
             
-        except Exception as e: #when error logic
-            st.error(f"There has been an error when communicating with the AI : {e}") #displays the error and error code in a red box
+        except Exception as e: # <-- FIXED: Corrected indentation alignment
+            st.error(f"There has been an error when communicating with the AI : {e}")
 
 #displaying the list 
 st.subheader("Session History (Resets on Refresh)")
