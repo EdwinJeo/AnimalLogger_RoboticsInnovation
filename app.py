@@ -7,6 +7,7 @@ from google import genai
 from PIL import Image 
 import urllib.parse
 import requests
+import pydeck as pdk
 
 
 #Getting the page set up so that the tab thingy shows stuff 
@@ -56,6 +57,7 @@ if picture and picture != st.session_state.last_processed:
         Population: [Brief detail about its global or local population trend]
         Eco-Fact: [One short, kid-friendly fact on how it helps the ecosystem]
         XP: [Give it an XP score between 50 and 200 based on how rare or interesting it is, just write the number]
+        GlobalPoints: [Provide 5 to 8 pairs of latitude and longitude coordinates representing its worldwide habitat regions, formatted strictly as: lat,lon; lat,lon; lat,lon]
         Please note that if the image does not show an animal then respond with 'No Animal Identified'
         """
 
@@ -84,6 +86,28 @@ if picture and picture != st.session_state.last_processed:
                 for line in ai_description.split('\n'):#sorts through ai response line by line 
                     if "Name:" in line: #identifies part with the name of animal in it 
                         animal_name = line.replace("Name:" , "").strip() # replaces variable with the name 
+
+
+                #getting the data for heatmap to work
+                heatmap_data = [] #getting the heatmap data into index / list
+                clean_description_lines = [] #so that this way the user doesn't see anything
+                for line in ai_description.split('\n'): #parsing through all of the lines
+                    if "GlobalPoints:" in line: #searching for the lat and long
+                        points_str = line.replace("GlobalPoints:", "").strip() #setting into variable
+                        pairs = points_str.split(';') #splitting into pairs by splitting after the semi colon
+                        for pair in pairs: #for every pair in the pairs thing then do smth else
+                            if ',' in pair: #if there is a comma in the pair then
+                                try:  # do this 
+                                    lat_str, lon_str = pair.split(',') #split into two variables which are lat and long 
+                                    heatmap_data.append({"lat": float(lat_str.strip()), "lon": float(lon_str.strip())}) #set it to the index or list and do it by setting this through use of loat and strip to cut it 
+                                except ValueError: #if there is something wrong then pass code
+                                    pass
+                    else:
+                        clean_description_lines.append(line) #if doesnt work then just delete that line from the thing
+
+                clean_description = "\n".join(clean_description_lines) #removing that line to make it nice and clean for end user
+                formatted_description = clean_description.replace('\n',  '  \n') #replacing it with better new line as that new line is not accpeted in md 
+                df_heatmap = pd.DataFrame(heatmap_data) #variable called data for heatmap is set up
 
                 image_url = None# image url is set to none to act as a fallback 
                 try:
@@ -115,7 +139,9 @@ if picture and picture != st.session_state.last_processed:
 
                 analysed_items = {
                     "image" : display_image,
-                    "description" : f"{formatted_description}  \n\n  {earned_xp} XP"
+                    "description" : f"{formatted_description}  \n\n  {earned_xp} XP",
+                    "heatmap" : df_heatmap #because history log shows all of them we need to make sure they each save theirs
+
                 }
 
                 st.session_state.history.insert(0, analysed_items) #puts into the list at the bottom
@@ -140,6 +166,31 @@ if st.session_state.history:
         #to display info in second column
         with col2:
             st.success(item["description"])
+
+            #code block to render the heatmap
+            df_item_heatmap = item.get("heatmap") #retrieves the heatmap stuff 
+            if df_item_heatmap is not None and not df_item_heatmap.empty:
+                st.markdown("**Global Distribution Heatmap**") #putting a title for the heatmap
+                heatmap_chart = pdk.Deck( #setting the charts properties
+                    map_style="dark", #allows the map to render properly
+                    initial_view_state=pdk.ViewState( 
+                        latitude = df_item_heatmap['lat'].mean(), #setting latitude 
+                        longitude = df_item_heatmap['lon'].mean(), #setting longitude
+                        zoom=1, #setting the zoom
+                        pitch=0, #setting the pitch
+                    ),
+                    layers=[ #making it a heatmap and setting all the stuff up
+                        pdk.Layer(
+                            "Heatmaplayer", 
+                            data=df_item_heatmap,
+                            get_position="[lon, lat]" , 
+                            opacity = 0.8,
+                            radius_pixels=50
+                        ),
+                    ],
+                )
+                
+                st.pydeck_chart(heatmap_chart) #displaying it 
 
         st.divider()
 else:
