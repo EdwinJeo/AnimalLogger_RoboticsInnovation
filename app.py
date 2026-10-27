@@ -12,8 +12,8 @@ import re
 
 
 #Getting the page set up so that the tab thingy shows stuff 
-st.set_page_config(page_title="Talos Animal Recogniser", page_icon="🐱")
-st.title("Talos Animal Recogniser 🐱")
+st.set_page_config(page_title="Talos Wildlife Recogniser", page_icon="🐱")
+st.title("Talos Wildlife Recogniser 🐱")
 
 #making the history thing so that it records it 
 if "history" not in st.session_state:
@@ -52,9 +52,9 @@ if picture and picture != st.session_state.last_processed:
     #cool spinning animation to show smth happening
     with st.spinner("We are currently processing the image "):
 
-        prompt = """Analyze this image and provide the response in this exact format:
-        Name: [Common name of the animal]
-        Endangerment: [Conservation status e.g., Least Concern, Vulnerable, Endangered]
+        prompt = """Analyze this image, beware that it could conatin animals, plants, trees, or flowers and then provide the response in this exact format:
+        Name: [Common name of the animal or plant]
+        Endangerment: [Conservation status or plant status e.g., Least Concern, Vulnerable, Endangered, Common cultivated]
         Population: [Brief detail about its global or local population trend]
         Eco-Fact: [One short, kid-friendly fact on how it helps the ecosystem]
         XP: [Give it an XP score between 50 and 200 based on how rare or interesting it is, just write the number]
@@ -120,7 +120,7 @@ if picture and picture != st.session_state.last_processed:
                     try:
                         formatted_query = urllib.parse.quote(animal_name) 
                         wiki_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{formatted_query}" 
-                        headers = {'User-Agent': 'TalosAnimalRecogniser/1.0 (Educational Project)'} 
+                        headers = {'User-Agent': 'TalosWildlifeRecogniser/1.0 (Educational Project)'} 
 
                         wiki_response = requests.get(wiki_url, headers = headers) 
                         if wiki_response.status_code == 200: 
