@@ -129,10 +129,7 @@ if picture and picture != st.session_state.last_processed:
 
                 st.session_state.score += earned_xp
 
-                
-                
-
-                formatted_description = ai_description.replace('\n', '  \n')
+                # Using clean_description here so GlobalPoints text never displays
                 st.success(f"{formatted_description} \n\n +{earned_xp} XP added to your score!") #displays the response in a green text box
                 st.balloons()
                 
@@ -195,5 +192,3 @@ if st.session_state.history:
         st.divider()
 else:
     st.info("Nothing has been sent to analyse") # what to show when nothing is there
-
-
