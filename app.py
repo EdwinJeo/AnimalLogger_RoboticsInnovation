@@ -181,7 +181,7 @@ if st.session_state.history:
                     ),
                     layers=[ #making it a heatmap and setting all the stuff up
                         pdk.Layer(
-                            "Heatmaplayer", 
+                            "HeatmapLayer", 
                             data=df_item_heatmap,
                             get_position="[lon, lat]" , 
                             opacity = 0.8,
